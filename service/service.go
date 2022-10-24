@@ -34,20 +34,19 @@ func (s *Service) Handle(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) Post(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-	var u newUser
-	err := decoder.Decode(&u)
+	var crtUsr createUser
+	err := decoder.Decode(&crtUsr)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
 	}
-	userId := s.storage.AddUser(u.Name, u.Age, u.Friends)
+	userId := s.storage.AddUser(crtUsr.Name, crtUsr.Age, crtUsr.Friends)
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte("User was created"))
 	w.Write([]byte(fmt.Sprintf("\nuser_id:%v", userId)))
 }
 
-// MakeFriends TODO: i don't like this
 func (s *Service) MakeFriends(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var mF makeFriends
@@ -57,7 +56,12 @@ func (s *Service) MakeFriends(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
-	s.storage.AddFriend(mF.SourceID, mF.TargetID)
+	err = s.storage.AddFriend(mF.SourceID, mF.TargetID)
+	if err != nil {
+		w.WriteHeader(http.StatusAlreadyReported)
+		w.Write([]byte(err.Error()))
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(fmt.Sprintf("%v и %v теперь друзья", s.storage.users[mF.SourceID].name, s.storage.users[mF.TargetID].name)))
 }
@@ -70,13 +74,11 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
-	w.Write([]byte(s.storage.GetUser(id)))
-	friends := s.storage.GetFriendsToStr(id)
+	friends := s.storage.FriendsToStr(id)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(friends))
 }
 
-// Delete TODO:implement the removal of this user from all friends
 func (s *Service) Delete(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var dU deleteUser
@@ -87,28 +89,31 @@ func (s *Service) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	nameRemote := s.storage.users[dU.TargetID].name
-	s.storage.DeleteUser(dU.TargetID)
+	err = s.storage.DeleteUser(dU.TargetID)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(err.Error()))
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(fmt.Sprintf("A user with the name was deleted:%v\nUser_id:%v\n", nameRemote, dU.TargetID)))
 }
 
-// Put TODO:looks like doesn't good
 func (s *Service) Put(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(trimFirstRune(r.URL.Path))
 	decoder := json.NewDecoder(r.Body)
-	var nA newAge
-	err := decoder.Decode(&nA)
+	var updateAge updateUserAge
+	err := decoder.Decode(&updateAge)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
 	}
-	s.storage.users[id] = s.storage.users[id].NewAge(nA.Age)
+	s.storage.users[id].NewAge(updateAge.Age)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("user's age has been successfully updated"))
 }
 
-// TODO:she doesn't belong here
 func trimFirstRune(s string) string {
 	_, i := utf8.DecodeRuneInString(s)
 	return s[i:]

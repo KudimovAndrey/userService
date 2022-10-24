@@ -14,31 +14,44 @@ func NewStorage() *userStorage {
 	return &uSt
 }
 
-func (u *userStorage) AddFriend(sourceId, targetId int) {
-	u.users[sourceId] = u.users[sourceId].AddFriend(targetId)
-	u.users[targetId] = u.users[targetId].AddFriend(sourceId)
+func (us *userStorage) AddFriend(sourceId, targetId int) error {
+	err := us.users[sourceId].AddFriend(targetId)
+	if err != nil {
+		return err
+	}
+	err = us.users[targetId].AddFriend(sourceId)
+	return err
 }
 
-// getuser
-func (u *userStorage) GetUser(userId int) string {
-	res := u.users[userId]
-	return fmt.Sprintf("\nUser_id:%d\nName:%s\nAge:%d\nFriends:%v\n", userId, res.GetName(), res.GetAge(), res.GetFriends())
+func (us *userStorage) GetUser(userId int) *user {
+	return us.users[userId]
 }
 
-func (u *userStorage) AddUser(name string, age int, friends []int) int {
+func (us *userStorage) AddUser(name string, age int, friends []int) int {
 	newUser := user{name, age, friends}
-	u.users[len(u.users)] = &newUser
-	return len(u.users) - 1
+	us.users[len(us.users)] = &newUser
+	return len(us.users) - 1
 }
 
-func (u *userStorage) GetFriendsToStr(userId int) string {
+func (us *userStorage) FriendsToStr(userId int) string {
 	result := strings.Builder{}
-	for _, friendId := range u.users[userId].friends {
-		result.WriteString(u.GetUser(friendId))
+	for _, friendId := range us.users[userId].friends {
+		result.WriteString(us.UserToStr(friendId))
 	}
 	return result.String()
 }
+func (us *userStorage) UserToStr(userId int) string {
+	user := us.GetUser(userId)
+	return fmt.Sprintf("\nuser_id:%v%v", userId, user.ToString())
+}
 
-func (u *userStorage) DeleteUser(userId int) {
-	delete(u.users, userId)
+func (us *userStorage) DeleteUser(userId int) error {
+	for _, friend := range us.users[userId].friends {
+		err := us.users[friend].DeleteFriend(userId)
+		if err != nil {
+			return err
+		}
+	}
+	delete(us.users, userId)
+	return nil
 }

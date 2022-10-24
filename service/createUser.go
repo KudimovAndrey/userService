@@ -1,6 +1,6 @@
 package service
 
-type newUser struct {
+type createUser struct {
 	Name    string `json:"name"`
 	Age     int    `json:"age"`
 	Friends []int  `json:"friends"`
