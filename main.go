@@ -1,16 +1,20 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"net/http"
 	"userService/service"
 )
 
-const addr string = "localhost:8080"
-
 func main() {
+	var addr string
+	flag.StringVar(&addr, "host", "localhost:8080", "server connection address")
+	flag.Parse()
 	mux := http.NewServeMux()
 	srv := service.NewService()
 	mux.HandleFunc("/", srv.Handle)
 	mux.HandleFunc("/makeFriends", srv.MakeFriends)
+	fmt.Println(addr)
 	http.ListenAndServe(addr, mux)
 }

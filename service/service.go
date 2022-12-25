@@ -13,7 +13,8 @@ type Service struct {
 }
 
 func NewService() *Service {
-	srv := Service{*NewStorage()}
+	storage, _ := NewStorage()
+	srv := Service{*storage}
 	return &srv
 }
 
@@ -41,7 +42,7 @@ func (s *Service) Post(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
-	userId := s.storage.AddUser(crtUsr.Name, crtUsr.Age, crtUsr.Friends)
+	userId, _ := s.storage.AddUser(crtUsr.Name, crtUsr.Age, crtUsr.Friends)
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte("User was created"))
 	w.Write([]byte(fmt.Sprintf("\nuser_id:%v", userId)))
@@ -62,8 +63,10 @@ func (s *Service) MakeFriends(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
+	firstFriend, _ := s.storage.GetUser(mF.SourceID)
+	secondFriend, _ := s.storage.GetUser(mF.TargetID)
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("%v и %v теперь друзья", s.storage.users[mF.SourceID].name, s.storage.users[mF.TargetID].name)))
+	w.Write([]byte(fmt.Sprintf("%v и %v теперь друзья", firstFriend.GetName(), secondFriend.GetName())))
 }
 
 func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
@@ -74,7 +77,7 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
-	friends := s.storage.FriendsToStr(id)
+	friends, err := s.storage.FriendsToStr(id)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(friends))
 }
@@ -88,7 +91,7 @@ func (s *Service) Delete(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
-	nameRemote := s.storage.users[dU.TargetID].name
+	nameRemote, _ := s.storage.GetUser(dU.TargetID)
 	err = s.storage.DeleteUser(dU.TargetID)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -96,7 +99,7 @@ func (s *Service) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("A user with the name was deleted:%v\nUser_id:%v\n", nameRemote, dU.TargetID)))
+	w.Write([]byte(fmt.Sprintf("A user with the name was deleted:%v\nUser_id:%v\n", nameRemote.GetName(), dU.TargetID)))
 }
 
 func (s *Service) Put(w http.ResponseWriter, r *http.Request) {
@@ -109,7 +112,7 @@ func (s *Service) Put(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
-	s.storage.users[id].NewAge(updateAge.Age)
+	s.storage.UpdateAge(id, updateAge.Age)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("user's age has been successfully updated"))
 }
