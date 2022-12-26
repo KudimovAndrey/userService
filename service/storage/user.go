@@ -1,4 +1,4 @@
-package service
+package storage
 
 import (
 	"fmt"
@@ -9,19 +9,6 @@ type User struct {
 	name    string
 	age     int
 	friends []int
-}
-
-func (u *User) SetID(id int) {
-	u.userID = id
-}
-func (u *User) SetName(name string) {
-	u.name = name
-}
-func (u *User) SetAge(age int) {
-	u.age = age
-}
-func (u *User) SetFriends(friends []int) {
-	u.friends = friends
 }
 
 func (u *User) GetID() int {
@@ -41,5 +28,5 @@ func (u *User) GetFriends() []int {
 }
 
 func (u *User) ToString() string {
-	return fmt.Sprintf("\nUser_id:%d\nName:%s\nAge:%d\nFriends:%v\n", u.GetID(), u.GetName(), u.GetAge(), u.GetFriends())
+	return fmt.Sprintf("\nUser_id:%d\nName:%s\nAge:%d\nFriends:%v\n", u.userID, u.name, u.age, u.friends)
 }

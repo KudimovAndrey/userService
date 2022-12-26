@@ -15,6 +15,6 @@ func main() {
 	srv := service.NewService()
 	mux.HandleFunc("/", srv.Handle)
 	mux.HandleFunc("/makeFriends", srv.MakeFriends)
-	fmt.Println(addr)
+	fmt.Printf("server started on %s\n", addr)
 	http.ListenAndServe(addr, mux)
 }
