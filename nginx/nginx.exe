@@ -15,7 +15,7 @@ events {
 
 
 http {
-	include		  c:/nginx/conf/sites-enabled/*.conf;
+	include		  E:/nginx/conf/sites-enabled/*.conf;
     include       mime.types;
     default_type  application/octet-stream;
 
